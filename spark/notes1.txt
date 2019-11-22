@@ -1,0 +1,37 @@
+Hadoop vocabulary
+Hadoop - an ecosystem of tools for big data storage and data analysis. Hadoop is an older system than Spark but is still used by many companies. The major difference between Spark and Hadoop is how they use memory. Hadoop writes intermediate results to disk whereas Spark tries to keep data in memory whenever possible. This makes Spark faster for many use cases.
+
+Hadoop MapReduce - a system for processing and analyzing large data sets in parallel.
+
+Hadoop YARN - a resource manager that schedules jobs across a cluster. The manager keeps track of what computer resources are available and then assigns those resources to specific tasks.
+Hadoop Distributed File System (HDFS) - a big data storage system that splits data into chunks and stores the chunks across a cluster of computers.
+Apache Pig - a SQL-like language that runs on top of Hadoop MapReduce
+Apache Hive - another SQL-like interface that runs on top of Hadoop MapReduce
+==================
+Spark cluster
+* Local mode - no distributed computing. everything on local machine
+* Cluster monitor - monitors available resources. Yarn, or standalone or mesos
+
+==================
+Spark use cases
+* Data Analytics
+* Machine Learning - http://spark.apache.org/mllib/
+* Streaming - http://spark.apache.org/streaming/
+* Graph analytics - http://spark.apache.org/graphx/
+
+If your data is not big, use
+* AWK - a command line tool for manipulating text files
+* R - a programming language and software environment for statistical computing
+* Python PyData Stack, which includes pandas, matplotlib, numpy, and scikit-learn among other libraries
+* SQL Alchemy - provides an abstraction layer to manipulate SQL tables with generative Python expressions.
+* scikit-learn - algorithms for classification, regression, and clustering, as well as utilities for preprocessing data, fine tuning model parameters and testing their results
+* deep learning - TensorFlow or PyTorch
+
+==================
+Spark limitations
+* streaming latency = 500 ms
+* native streaming tool Storm, Flink may be better
+* spark for deep learning ?
+=====================
+Spark is faster than hadoop because spark keeps intermediate results in memory rather than disk
+
