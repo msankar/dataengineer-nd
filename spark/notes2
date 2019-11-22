@@ -1,0 +1,340 @@
+Data Wrangling with spark
+=================================================
+Functional programming - Spark is written in scala.  Python api -pyspark
+
+Pure functions 
+* Avoid unintended side-effects on variables outside of its scope.
+* Don't alter input data 
+
+Spark DAGs
+==========
+* Immutable input data
+* Lazy evaluation (avoid threshing) filter right at the end.
+
+Maps and lambda functions
+======================
+map - transforms input and output.
+anonymous functions - lambdas
+Spark locally
+# import findspark
+# findspark.init('spark-2.3.2-bin-hadoop2.7')
+
+RDD = Resilient distributed dataset
+
+Data format
+====================
+CSV, Json, HTML, XML
+
+Distributed data stores = AWS, HDFS
+
+Spark session
+====================
+import pyspark
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+spark = SparkSession \
+    .builder \
+    .appName("Our first Python Spark SQL example") \
+    .getOrCreate()
+spark.sparkContext.getConf().getAll()
+
+path = "data/sparkify_log_small.json"
+user_log = spark.read.json(path)
+
+user_log.printSchema()
+user_log.describe()
+user_log.show(n=1)
+user_log.take(5)
+out_path = "data/sparkify_log_small.csv"
+user_log.write.save(out_path, format="csv", header=True)
+user_log_2 = spark.read.csv(out_path, header=True)
+
+user_log_2.printSchema()
+user_log_2.take(2)
+user_log_2.select("userID").show()
+user_log_2.take(1)
+
+==================================
+
+Imperative programming = how (spark dataframe)
+Declarative programming = what (sql)
+
+==================================
+Spark commands
+* select(): returns a new DataFrame with the selected columns
+* filter(): filters rows using the given condition
+* where(): is just an alias for filter()
+* groupBy(): groups the DataFrame using the specified columns, so we can run aggregation on them
+* sort(): returns a new DataFrame sorted by the specified column(s). By default the second parameter 'ascending' is True.
+* dropDuplicates(): returns a new DataFrame with unique rows based on all or just a subset of columns
+* withColumn(): returns a new DataFrame by adding a column or replacing the existing column that has the same name. The first parameter is the name of the new column, the second is an expression of how to compute it.
+* count(), countDistinct(), avg(), max(), min(), etc. in the pyspark.sql.functions module
+groupBy()
+* agg({"salary": "avg", "age": "max"})
+* window we can choose how to sort and group (with the partitionBy method) the rows and how wide of a window we'd like to use (described by rangeBetween or rowsBetween).
+
+REF 
+https://spark.apache.org/docs/latest/sql-programming-guide.html
+https://spark.apache.org/docs/latest/api/python/index.html
+https://spark.apache.org/docs/latest/sql-getting-started.html
+https://spark.apache.org/docs/latest/api/sql/index.html
+
+===========================================
+Data wrangling commands
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import desc
+from pyspark.sql.functions import asc
+from pyspark.sql.functions import sum as Fsum
+
+import datetime
+
+import numpy as np
+import pandas as pd
+%matplotlib inline
+import matplotlib.pyplot as plt
+
+spark = SparkSession \
+    .builder \
+    .appName("Wrangling Data") \
+    .getOrCreate()
+
+path = "data/sparkify_log_small.json"
+user_log = spark.read.json(path)
+
+user_log.take(5)
+user_log.printSchema()
+user_log.describe().show()
+user_log.describe("artist").show()
+user_log.describe("sessionId").show()
+user_log.count()
+user_log.select("page").dropDuplicates().sort("page").show()
+user_log.select(["userId", "firstname", "page", "song"]).where(user_log.userId == "1046").collect()
+get_hour = udf(lambda x: datetime.datetime.fromtimestamp(x / 1000.0). hour)
+user_log = user_log.withColumn("hour", get_hour(user_log.ts))
+user_log.head()
+songs_in_hour = user_log.filter(user_log.page == "NextSong").groupby(user_log.hour).count().orderBy(user_log.hour.cast("float"))
+songs_in_hour.show()
+songs_in_hour_pd = songs_in_hour.toPandas()
+songs_in_hour_pd.hour = pd.to_numeric(songs_in_hour_pd.hour)
+
+plt.scatter(songs_in_hour_pd["hour"], songs_in_hour_pd["count"])
+plt.xlim(-1, 24);
+plt.ylim(0, 1.2 * max(songs_in_hour_pd["count"]))
+plt.xlabel("Hour")
+plt.ylabel("Songs played");
+
+# drop rows with missing values
+user_log_valid = user_log.dropna(how = "any", subset = ["userId", "sessionId"])
+user_log_valid.count()
+user_log.select("userId").dropDuplicates().sort("userId").show()
+
+user_log_valid.filter("page = 'Submit Downgrade'").show()
+user_log.select(["userId", "firstname", "page", "level", "song"]).where(user_log.userId == "1138").collect()
+flag_downgrade_event = udf(lambda x: 1 if x == "Submit Downgrade" else 0, IntegerType())
+user_log_valid = user_log_valid.withColumn("downgraded", flag_downgrade_event("page"))
+user_log_valid.head()
+from pyspark.sql import Window
+windowval = Window.partitionBy("userId").orderBy(desc("ts")).rangeBetween(Window.unboundedPreceding, 0)
+user_log_valid = user_log_valid.withColumn("phase", Fsum("downgraded").over(windowval))
+user_log_valid.select(["userId", "firstname", "ts", "page", "level", "phase"]).where(user_log.userId == "1138").sort("ts").collect()
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import isnan, count, when, col, desc, udf, col, sort_array, asc, avg
+from pyspark.sql.functions import sum as Fsum
+from pyspark.sql.window import Window
+from pyspark.sql.types import IntegerType
+spark = SparkSession \
+    .builder \
+    .appName("Data Frames practice") \
+    .getOrCreate()
+
+df = spark.read.json("data/sparkify_log_small.json")
+# filter for users with blank user id
+blank_pages = df.filter(df.userId == '') \
+    .select(col('page') \
+    .alias('blank_pages')) \
+    .dropDuplicates()
+
+# get a list of possible pages that could be visited
+all_pages = df.select('page').dropDuplicates()
+
+# find values in all_pages that are not in blank_pages
+# these are the pages that the blank user did not go to
+for row in set(all_pages.collect()) - set(blank_pages.collect()):
+    print(row.page)
+
+df.filter(df.gender == 'F') \
+    .select('userId', 'gender') \
+    .dropDuplicates() \
+    .count()
+
+df.filter(df.page == 'NextSong') \
+    .select('Artist') \
+    .groupBy('Artist') \
+    .agg({'Artist':'count'}) \
+    .withColumnRenamed('count(Artist)', 'Artistcount') \
+    .sort(desc('Artistcount')) \
+    .show(1)
+
+-----------------------------
+ function = udf(lambda ishome : int(ishome == 'Home'), IntegerType())
+
+user_window = Window \
+    .partitionBy('userID') \
+    .orderBy(desc('ts')) \
+    .rangeBetween(Window.unboundedPreceding, 0)
+
+cusum = df.filter((df.page == 'NextSong') | (df.page == 'Home')) \
+    .select('userID', 'page', 'ts') \
+    .withColumn('homevisit', function(col('page'))) \
+    .withColumn('period', Fsum('homevisit').over(user_window))
+
+cusum.filter((cusum.page == 'NextSong')) \
+    .groupBy('userID', 'period') \
+    .agg({'period':'count'}) \
+    .agg({'count(period)':'avg'}).show()
+
+
+================================================================
+
+SPARK SQL examples
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import desc
+from pyspark.sql.functions import asc
+from pyspark.sql.functions import sum as Fsum
+
+import datetime
+
+import numpy as np
+import pandas as pd
+%matplotlib inline
+import matplotlib.pyplot as plt
+
+spark = SparkSession \
+    .builder \
+    .appName("Data wrangling with Spark SQL") \
+    .getOrCreate()
+path = "data/sparkify_log_small.json"
+user_log = spark.read.json(path)
+user_log.take(1)
+user_log.createOrReplaceTempView("user_log_table")
+spark.sql("SELECT * FROM user_log_table LIMIT 2").show()
+spark.sql('''
+          SELECT * 
+          FROM user_log_table 
+          LIMIT 2
+          '''
+          ).show()
+
+spark.sql('''
+          SELECT COUNT(*) 
+          FROM user_log_table 
+          '''
+          ).show()
+spark.sql('''
+          SELECT userID, firstname, page, song
+          FROM user_log_table 
+          WHERE userID == '1046'
+          '''
+          ).collect()
+spark.sql('''
+          SELECT DISTINCT page
+          FROM user_log_table 
+          ORDER BY page ASC
+          '''
+          ).show()
+spark.udf.register("get_hour", lambda x: int(datetime.datetime.fromtimestamp(x / 1000.0).hour))
+spark.sql('''
+          SELECT *, get_hour(ts) AS hour
+          FROM user_log_table 
+          LIMIT 1
+          '''
+          ).collect()
+songs_in_hour = spark.sql('''
+          SELECT get_hour(ts) AS hour, COUNT(*) as plays_per_hour
+          FROM user_log_table
+          WHERE page = "NextSong"
+          GROUP BY hour
+          ORDER BY cast(hour as int) ASC
+          '''
+          )
+songs_in_hour_pd = songs_in_hour.toPandas() 
+========
+from pyspark.sql import SparkSession
+# from pyspark.sql.functions import isnan, count, when, col, desc, udf, col, sort_array, asc, avg
+# from pyspark.sql.functions import sum as Fsum
+# from pyspark.sql.window import Window
+# from pyspark.sql.types import IntegerType
+
+spark = SparkSession \
+    .builder \
+    .appName("Spark SQL Quiz") \
+    .getOrCreate()
+
+user_log = spark.read.json("data/sparkify_log_small.json")
+
+user_log.createOrReplaceTempView("log_table")
+# Here is one solution
+spark.sql("SELECT Artist, COUNT(Artist) AS plays \
+        FROM log_table \
+        GROUP BY Artist \
+        ORDER BY plays DESC \
+        LIMIT 1").show()
+
+# Here is an alternative solution
+# Get the artist play counts
+play_counts = spark.sql("SELECT Artist, COUNT(Artist) AS plays \
+        FROM log_table \
+        GROUP BY Artist")
+
+# save the results in a new view
+play_counts.createOrReplaceTempView("artist_counts")
+
+# use a self join to find where the max play equals the count value
+spark.sql("SELECT a2.Artist, a2.plays FROM \
+          (SELECT max(plays) AS max_plays FROM artist_counts) AS a1 \
+          JOIN artist_counts AS a2 \
+          ON a1.max_plays = a2.plays \
+          ").show()         
+# SELECT CASE WHEN 1 > 0 THEN 1 WHEN 2 > 0 THEN 2.0 ELSE 1.2 END;
+is_home = spark.sql("SELECT userID, page, ts, CASE WHEN page = 'Home' THEN 1 ELSE 0 END AS is_home FROM log_table \
+            WHERE (page = 'NextSong') or (page = 'Home') \
+            ")
+
+# keep the results in a new view
+is_home.createOrReplaceTempView("is_home_table")
+
+# find the cumulative sum over the is_home column
+cumulative_sum = spark.sql("SELECT *, SUM(is_home) OVER \
+    (PARTITION BY userID ORDER BY ts DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS period \
+    FROM is_home_table")
+
+# keep the results in a view
+cumulative_sum.createOrReplaceTempView("period_table")
+
+# find the average count for NextSong
+spark.sql("SELECT AVG(count_results) FROM \
+          (SELECT COUNT(*) AS count_results FROM period_table \
+GROUP BY userID, period, page HAVING page = 'NextSong') AS counts").show()
+
+============================
+RDD = Resilient distributed dataset.
+Ver 2.0 data frame and data set were unified.
+
+============================
+Why might you prefer to use SQL over data frames? Why might you prefer data frames over SQL?
+
+Both Spark SQL and Spark Data Frames are part of the Spark SQL library. Hence, they both use the Spark SQL Catalyst Optimizer to optimize queries.
+
+You might prefer SQL over data frames because the syntax is clearer especially for teams already experienced in SQL.
+
+Spark data frames give you more control. You can break down your queries into smaller steps, which can make debugging easier. You can also cache intermediate results or repartition intermediate results.
