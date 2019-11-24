@@ -1,0 +1,86 @@
+  
+# Create AWS account  malasankarbot  Tuti
+
+
+IAM
+
+https://056264805927.signin.aws.amazon.com/console/
+or 
+https://malasankarbot.signin.aws.amazon.com/console 
+
+Administrator
+Tuti
+
+Key Pair
+spark-cluster
+b6:cb:fb:ef:28:b0:c6:84:bc:fb:e9:70:a5:f7:2b:6d:a4:42:7b:3d
+
+EMR = Elastic map reduce
+ssh -i ~/spark-cluster.pem hadoop@ec2-13-57-243-160.us-west-1.compute.amazonaws.com
+
+/usr/bin/spark-submit --master yarn ./testSubmit.py
+=================================
+READ FROM HDFS
+SCP files to HADOOP
+scp -i ~/spark-cluster.pem sparkify_log_small.json  hadoop@ec2-13-57-243-160.us-west-1.compute.amazonaws.com:~/
+scp -i ~/spark-cluster.pem sparkify_log_small_2.json  hadoop@ec2-13-57-243-160.us-west-1.compute.amazonaws.com:~/
+
+From EMR SSH terminal
+ hdfs dfs -mkdir /user/sparkify_data
+ hdfs dfs -copyFromLocal sparkify_log_small.json /user/sparkify_data/
+ hdfs dfs -copyFromLocal sparkify_log_small_2.json /user/sparkify_data/
+
+
+sparkify_hdfs_data = "hdfs:///user/sparkify-data/sparkify_log_small.json"
+df = spark.read.json(sparkify_log_data)
+df.persist()
+df.head(3)
+==============================
+
+READ FROM S3
+songlist = ["SongOne", "SongTwo"]
+distriblog = sc.parallelize(songlist)
+distriblog.map(lambda x : x.lower()).collect()
+Go to S3 from EC2 console, create a S3 bucket and load some data.
+sparkify_log_data = "s3://sparkify-ms/sparkify_log_small.json"
+df = spark.read.json(sparkify_log_data)
+df.persist()
+df.head(3)
+
+================================================
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import desc
+from pyspark.sql.functions import asc
+from pyspark.sql.functions import sum as Fsum
+
+
+
+if __name__ == "__main__":
+
+  spark = SparkSession \
+    .builder \
+    .appName("Wrangling Data") \
+    .getOrCreate()
+
+  songlist = ["SongOne", "SongTwo"]
+  distriblog = spark.sparkContext.parallelize(songlist)
+  print(distriblog.map(lambda x : x.lower()).collect())
+
+  spark.stop()
+
+
+ sparkify_log_data = "s3n://sparkify/sparkify_log_small.json"
+
+ df = spark.read.json(sparkify_log_data)
+ df.persist()
+ df.head(3)
+ ===========================
+
+ SPARK UI
+ http://ec2-13-57-243-160.us-west-1.compute.amazonaws.com:18080/
+ ================================
+
+ 
