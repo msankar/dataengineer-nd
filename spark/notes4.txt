@@ -1,0 +1,13 @@
+ML lib = spark.ml   spark.mllib(soon to be deprecated)
+
+Scalers
+
+Normalizer
+StandardScaler
+MinMaxScaler
+MaxAbsScale
+Indexers
+
+StringIndexer
+IndexToString
+VectorIndexer
