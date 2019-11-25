@@ -1,0 +1,135 @@
+Importance of Relational Databases:
+Standardization of data model: Once your data is transformed into the rows and columns format, your data is standardized and you can query it with SQL
+Flexibility in adding and altering tables: Relational databases gives you flexibility to add tables, alter tables, add and remove data.
+Data Integrity: Data Integrity is the backbone of using a relational database.
+Standard Query Language (SQL): A standard language can be used to access the data with a predefined language.
+Simplicity : Data is systematically stored and modeled in tabular format.
+Intuitive Organization: The spreadsheet format is intuitive but intuitive to data modeling in relational databases.
+=================================
+OLAP vs OLTP = https://stackoverflow.com/questions/21900185/what-are-oltp-and-olap-what-is-the-difference-between-them
+
+Online Analytical Processing (OLAP):
+Databases optimized for these workloads allow for complex analytical and ad hoc queries, including aggregations. These type of databases are optimized for reads.
+
+Online Transactional Processing (OLTP):
+Databases optimized for these workloads allow for less complex queries in large volume. The types of queries for these databases are read, insert, update, and delete.
+
+The key to remember the difference between OLAP and OLTP is analytics (A) vs transactions (T). If you want to get the price of a shoe then you are using OLTP (this has very little or no aggregations). If you want to know the total stock of shoes a particular store sold, then this requires using OLAP (since this will require aggregations).
+====================================
+Normalization 
+* Structuring a relation DB series of normal forms to reduce data redundancy and increase data integrity. (no extra copies of data)
+* To free the database from unwanted insertions, updates, & deletion dependencies
+* To reduce the need for refactoring the database as new types of data are introduced
+* To make the relational model more informative to users
+* To make the database neutral to the query statistics
+
+How to reach First Normal Form (1NF):
+
+Atomic values: each cell contains unique and single values
+Be able to add data without altering tables
+Separate different relations into different tables
+Keep relationships between tables together with foreign keys
+Second Normal Form (2NF):
+
+Have reached 1NF
+All columns in the table must rely on the Primary Key
+Third Normal Form (3NF):
+
+Must be in 2nd Normal Form
+No transitive dependencies
+Remember, transitive dependencies you are trying to maintain is that to get from A-> C, you want to avoid going through B.
+When to use 3NF:
+
+When you want to update data, we want to be able to do in just 1 place. We want to avoid updating the table in the Customers Detail table (in the example in the lecture slide).
+
+=============================
+Normalization is about trying to increase data integrity by reducing the number of copies of the data. Data that needs to be added or updated will be done in as few places as possible.
+
+Denormalization is trying to increase performance by reducing the number of joins between tables (as joins can be slow). Data integrity will take a bit of a potential hit, as there will be more copies of the data (to reduce JOINS).
+
+=============================
+Fact and Dimensions
+https://medium.com/@BluePi_In/deep-diving-in-the-world-of-data-warehousing-78c0d52f49a
+
+STAR SCHEMA - fact table in the center, dim table around fact table
+benefits of star schema = denormalized, simplified queries , fast aggregations
+drawbacks of star schema = data integrity, dupe data, decreased query flex, many-to-many relationships
+
+
+SNOWFLAKE SCHEMA
+* Child table has multiple parents
+* Star schema is a special, simplified case of the snowflake schema
+* more normalized, 
+
+==============================
+import psycopg2
+
+try: 
+    conn = psycopg2.connect("host=127.0.0.1 dbname=studentdb user=student password=student")
+except psycopg2.Error as e: 
+    print("Error: Could not make connection to the Postgres database")
+    print(e)
+try: 
+    cur = conn.cursor()
+except psycopg2.Error as e: 
+    print("Error: Could not get cursor to the Database")
+    print(e)
+conn.set_session(autocommit=True)
+
+=================================
+Postgre sql commands
+========
+https://www.postgresql.org/docs/9.4/ddl-constraints.html
+
+CREATE TABLE IF NOT EXISTS customer_transactions (
+    customer_id int NOT NULL, 
+    store_id int, 
+    spent numeric
+);
+
+CREATE TABLE IF NOT EXISTS customer_transactions (
+    customer_id int NOT NULL UNIQUE, 
+    store_id int NOT NULL UNIQUE, 
+    spent numeric 
+);
+
+CREATE TABLE IF NOT EXISTS customer_transactions (
+    customer_id int NOT NULL, 
+    store_id int NOT NULL, 
+    spent numeric,
+    UNIQUE (customer_id, store_id, spent)
+);
+
+CREATE TABLE IF NOT EXISTS store (
+    store_id int PRIMARY KEY, 
+    store_location_city text,
+    store_location_state text
+);
+
+CREATE TABLE IF NOT EXISTS customer_transactions (
+    customer_id int, 
+    store_id int, 
+    spent numeric,
+    PRIMARY KEY (customer_id, store_id)
+);
+
+UPSERT
+=====
+INSERT INTO customer_address (customer_id, customer_street, customer_city, customer_state)
+VALUES
+ (
+ 432, '923 Knox Street', 'Albany', 'NY'
+ ) 
+ON CONFLICT (customer_id) 
+DO NOTHING;
+
+UPSERT
+INSERT INTO customer_address (customer_id, customer_street)
+VALUES
+    (
+    432, '923 Knox Street, Suite 1' 
+) 
+ON CONFLICT (customer_id) 
+DO UPDATE
+    SET customer_street  = EXCLUDED.customer_street;
+
