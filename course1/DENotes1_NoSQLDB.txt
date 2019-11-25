@@ -1,0 +1,115 @@
+NO SQL db = Not only SQL
+simpler design, horizontal scaling, availability
+
+Types of NoSQL dbs
+* Apache Cassandra - partition row store
+* Mongo DB - doc store
+* Dynamo DB - KV store
+* Apache HBase - wide col store
+* Neo4j - graph db
+
+Apache cassandra
+* Keyspace - collection of tables (similar to schema)
+* Table - group of partitions
+* Rows - single item
+
+Partition - fundamental unit of access, rows, how data is distributed
+Primary key - partition key and clustering columns
+columns - clustering and data, labeled element
+===============================
+When to use a NoSQL Database
+Need to be able to store different data type formats: NoSQL was also created to handle different data configurations: structured, semi-structured, and unstructured data. JSON, XML documents can all be handled easily with NoSQL.
+
+Large amounts of data: Relational Databases are not distributed databases and because of this they can only scale vertically by adding more storage in the machine itself. NoSQL databases were created to be able to be horizontally scalable. The more servers/systems you add to the database the more data that can be hosted with high availability and low latency (fast reads and writes).
+
+Need horizontal scalability: Horizontal scalability is the ability to add more machines or nodes to a system to increase performance and space for data
+
+Need high throughput: While ACID transactions bring benefits they also slow down the process of reading and writing data. If you need very fast reads and writes using a relational database may not suit your needs.
+
+Need a flexible schema: Flexible schema can allow for columns to be added that do not have to be used by every row, saving disk space.
+
+Need high availability: Relational databases have a single point of failure. When that database goes down, a failover to a backup system must happen and takes time.
+===================================
+
+When NOT to use a NoSQL Database?
+
+When you have a small dataset: NoSQL databases were made for big datasets not small datasets and while it works it wasn’t created for that.
+
+When you need ACID Transactions: If you need a consistent database with ACID transactions, then most NoSQL databases will not be able to serve this need. NoSQL database are eventually consistent and do not provide ACID transactions. However, there are exceptions to it. Some non-relational databases like MongoDB can support ACID transactions.
+
+When you need the ability to do JOINS across tables: NoSQL does not allow the ability to do JOINS. This is not allowed as this will result in full table scans.
+
+If you want to be able to do aggregations and analytics
+
+If you have changing business requirements : Ad-hoc queries are possible but difficult as the data model was done to fix particular queries
+
+If your queries are not available and you need the flexibility : You need your queries in advance. If those are not available or you will need to be able to have flexibility on how you query your data you might need to stick with a relational database
+
+=========================================
+
+python driver for cassandra.
+
+-- Cassandra commands
+import cassandra
+-- conn to db
+from cassandra.cluster import Cluster
+try: 
+    cluster = Cluster(['127.0.0.1']) #If you have a locally installed Apache Cassandra instance
+    session = cluster.connect()
+except Exception as e:
+    print(e)
+
+--  Create the keyspace
+try:
+    session.execute("""
+    CREATE KEYSPACE IF NOT EXISTS udacity 
+    WITH REPLICATION = 
+    { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }"""
+)
+
+except Exception as e:
+    print(e)
+
+-- connect to keyspace
+try:
+    session.set_keyspace('udacity')
+except Exception as e:
+    print(e)
+
+## TO-DO: Complete the query below
+query = "CREATE TABLE IF NOT EXISTS songs "
+query = query + "(song_title VARCHAR, artist_name VARCHAR, year INT, album_name VARCHAR, single BOOLEAN, PRIMARY KEY (year, artist_name))"
+try:
+    session.execute(query)
+except Exception as e:
+    print(e)
+
+## Add in query and then run the insert statement
+query = "INSERT INTO udacity.songs ( song_title, artist_name, year, single, album_name)" 
+query = query + " VALUES (%s, %s, %s, %s, %s) IF NOT EXISTS "
+
+try:
+    session.execute(query, ("Across The Universe", "The Beatles", 1970, False, "Let It Be"))
+except Exception as e:
+    print(e)
+    
+try:
+    session.execute(query, ("The Beatles", "Think For Yourself", 1965, False, "Rubber Soul"))
+except Exception as e:
+    print(e)
+
+## TO-DO: Complete and then run the select statement to validate the data was inserted into the table
+query = 'SELECT * FROM udacity.songs'
+try:
+    rows = session.execute(query)
+except Exception as e:
+    print(e)
+    
+for row in rows:
+    print (row.year, row.album_name, row.artist_name)
+
+    
+session.shutdown()
+cluster.shutdown()
+
+

@@ -1,0 +1,10 @@
+DE evolution
+https://medium.com/analytics-and-data/on-the-evolution-of-data-engineering-c5e56d273e37
+https://learn.panoply.io/hubfs/Data%20Engineering%20-%20Introduction%20and%20Epochs.pdf
+
+DE tools:
+
+https://www.burtchworks.com/2018/09/10/the-rise-of-data-engineering-common-skills-and-tools/
+https://www.analyticsindiamag.com/data-engineering-101-top-tools-and-framework-resources/
+https://joviam.com/this-infographic-of-big-data-tools-will-blow-your-mind-infographic/
+https://datafloq.com/big-data-open-source-tools/os-home/
