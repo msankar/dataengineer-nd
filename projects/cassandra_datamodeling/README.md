@@ -26,12 +26,15 @@ To start ETL process, run the Project_1B_ Project_Template.ipynb jupyter noteboo
 ## Database Schema 
 
 * session_activity - Session activity
+   
    ** _session_id, item_in_session, artist, song, length_
 
 * user_activity - songs in music database
+   
    **  _user_id, session_id, item_in_session, artist, song, first_name, last_name_
 
 * song_activity - artists in music database
+   
    ** _song, user_id, first_name, last_name_
 
 ## REFERENCES
