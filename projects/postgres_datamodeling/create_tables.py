@@ -6,7 +6,7 @@ def create_database():
     """ Creates sparkifydb database and student user.
     
     Returns:
-        cur: Cursor (psycopg2) to execute querys vs database
+        cur: Cursor (psycopg2) to execute queries vs database
         conn: Connection to sparkify database
     """
     # connect to default database
@@ -32,7 +32,7 @@ def drop_tables(cur, conn):
     """ Drops all the tables defined in "drop_table_queries"
     
     Args:
-        cur: Cursor (psycopg2) to execute querys in specified database
+        cur: Cursor (psycopg2) to execute queries in specified database
         conn: Connection to sparkify database
     Note:
         See drop_table_queries in sql_queries.py
@@ -46,7 +46,7 @@ def create_tables(cur, conn):
     """ Creates all the tables defined in "create_table_queries"
     
     Args:
-        cur: Cursor (psycopg2) to execute querys in specified database
+        cur: Cursor (psycopg2) to execute queries in specified database
         conn: Connection to sparkify database
     Note:
         See create_table_queries in sql_queries.py
