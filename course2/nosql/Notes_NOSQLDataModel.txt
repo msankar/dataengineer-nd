@@ -1,0 +1,35 @@
+Apache Cassandra - https://www.xenonstack.com/blog/nosql-databases/
+=====================
+NoSQL = Not only SQL
+ When to use : high availability, low latency, large data, scalability, fast R/W
+==========================
+No SQL distributed db design
+* DB scaled horizontally
+* no downtime - copies of data
+* eventual consistency = all nodes return last updated value.
+
+========================
+CAP theorem (2 out of 3)
+Consistency: Every read from the database gets the latest (and correct) piece of data or an error
+
+Availability: Every request is received and a response is given -- without a guarantee that the data is the latest update
+
+Partition Tolerance: The system continues to work regardless of losing network connectivity between nodes
+=========================
+Denormalization in Apache cassandra
+* NO JOINS , think about queries first.
+* Denormalization is not just okay -- it's a must
+* Denormalization must be done for fast reads
+* Apache Cassandra has been optimized for fast writes
+* ALWAYS think Queries first
+* One table per query is a great strategy
+* Apache Cassandra does not allow for JOINs between tables
+
+============================
+When Not to Use SQL:
+Need high Availability in the data: Indicates the system is always up and there is no downtime
+Have Large Amounts of Data
+Need Linear Scalability: The need to add more nodes to the system so performance will increase linearly
+Low Latency: Shorter delay before the data is transferred once the instruction for the transfer has been received.
+Need fast reads and write
+=============================
