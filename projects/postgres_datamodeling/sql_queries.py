@@ -1,5 +1,4 @@
 # DROP TABLES
-
 songplay_table_drop = "DROP TABLE IF EXISTS songplays"
 user_table_drop = "DROP TABLE IF EXISTS users"
 song_table_drop = "DROP TABLE IF EXISTS songs"
@@ -65,7 +64,6 @@ CREATE TABLE time(
 """)
 
 # INSERT RECORDS
-
 songplay_table_insert = ("""
 INSERT INTO songplays(start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
 VALUES(%s, %s, %s, %s, %s, %s, %s, %s)

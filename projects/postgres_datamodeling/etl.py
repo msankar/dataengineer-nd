@@ -5,8 +5,15 @@ import pandas as pd
 from sql_queries import *
 
 def process_song_file(cur, filepath):
+    """ Process json song files to populate songs and artists tables.
+    
+    Args:
+        cur: Cursor (psycopg2) to execute queries against database
+        filepath: Path of json song files to be processed
+    """
     # open song file
     df = pd.read_json(filepath, lines=True)
+    # Data clean-up 
     df['year'] = df['year'].apply(lambda x: x if x != 0 else None)
     df = df.replace({pd.np.nan: None, "": None})
 
@@ -19,6 +26,12 @@ def process_song_file(cur, filepath):
     cur.execute(artist_table_insert, artist_data)
 
 def process_log_file(cur, filepath):
+    """ Process json log files to populate songplay, user and time tables.
+    
+    Args:
+        cur: Cursor (psycopg2) to execute queries against database
+        filepath: Path of json log files to be processed
+    """
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -61,6 +74,18 @@ def process_log_file(cur, filepath):
         cur.execute(songplay_table_insert, songplay_data)
 
 def process_data(cur, conn, filepath, func):
+    """ ETL pipeline processing. Processes json files specified
+    in the file path and populates appropriate table in database
+    specified in input.
+       
+    Args:
+        cur: psycopg2 Cursor to execute queries against database
+        conn: Connection to sparkify database
+        filepath: Path to directory with either song or log json files.
+        func: Function name to populate tables from either song or log files.
+    Note:
+        See process_log_file and process_song_file in this class.
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
