@@ -17,7 +17,7 @@ Availability: Every request is received and a response is given -- without a gua
 Partition Tolerance: The system continues to work regardless of losing network connectivity between nodes
 =========================
 Denormalization in Apache cassandra
-* NO JOINS , think about queries first.
+* NO JOINS , think about queries first. 1 TABLE PER QUERY
 * Denormalization is not just okay -- it's a must
 * Denormalization must be done for fast reads
 * Apache Cassandra has been optimized for fast writes
@@ -26,6 +26,21 @@ Denormalization in Apache cassandra
 * Apache Cassandra does not allow for JOINs between tables
 
 ============================
+CQL = Cassandra query language
+NO joins, no group by , no subqueries
+=============================
+
+Primary Key
+Must be unique
+The PRIMARY KEY is made up of either just the PARTITION KEY or may also include additional CLUSTERING COLUMNS
+A Simple PRIMARY KEY is just one column that is also the PARTITION KEY. A Composite PRIMARY KEY is made up of more than one column and will assist in creating a unique value and in your retrieval queries
+The PARTITION KEY will determine the distribution of data across the system
+===========================
+Clustering
+The clustering column will sort the data in sorted ascending order, e.g., alphabetical order. Note: this is a mistake in the video, which says descending order.
+More than one clustering column can be added (or none!)
+===========================
+
 When Not to Use SQL:
 Need high Availability in the data: Indicates the system is always up and there is no downtime
 Have Large Amounts of Data
@@ -33,3 +48,26 @@ Need Linear Scalability: The need to add more nodes to the system so performance
 Low Latency: Shorter delay before the data is transferred once the instruction for the transfer has been received.
 Need fast reads and write
 =============================
+import cassandra
+# Conn to DB
+from cassandra.cluster import Cluster
+try: 
+    cluster = Cluster(['127.0.0.1']) #If you have a locally installed Apache Cassandra instance
+    session = cluster.connect()
+except Exception as e:
+    print(e)
+
+# Create a keyspace
+try:
+    session.execute("""
+    CREATE KEYSPACE IF NOT EXISTS udacity 
+    WITH REPLICATION = 
+    { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }"""
+)
+except Exception as e:
+    print(e)
+
+try:
+    session.set_keyspace('udacity')
+except Exception as e:
+    print(e)
