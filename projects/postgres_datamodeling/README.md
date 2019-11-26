@@ -9,7 +9,7 @@ As their data engineer I have to create a Postgres database with tables designed
 In this project, I'll apply what you've learned on data modeling with Postgres and build an ETL pipeline using Python. To complete the project, I will need to define fact and dimension tables for a star schema for a particular analytic focus, and write an ETL pipeline that transfers data from files in data song and log directories into these tables in Postgres using Python and SQL.
 
 ## Getting started
-
+To start ETL process, run the following from your terminal.
 `python create_tables.py`</br>
 `python etl.py`
 
@@ -47,32 +47,17 @@ And below is an example of what a single song file, TRAABJL12903CDCF1A.json, loo
 ```json
 {
   "num_songs": 1,
-  "artist_id": "ARJIE2Y1187B994AB7",
+  "artist_id": "ARJIE2Y34JH994AB7",
   "artist_latitude": null,
   "artist_longitude": null,
   "artist_location": "",
-  "artist_name": "Line Renaud",
-  "song_id": "SOUPIRU12A6D4FA1E1",
+  "artist_name": "Joe Tayler",
+  "song_id": "SE567HG8999HHG",
   "title": "Der Kleine Dompfaff",
-  "duration": 152.92036,
-  "year": 0
+  "duration": 68.98,
+  "year": 1980
 }
 ```
-
-#### Final tabes
-- songs table: Save song ID, title, artist ID, year, and duration from dataset
-
-| song_id            | title                          | artist_id          | year | duration  |
-|--------------------|--------------------------------|--------------------|------|-----------|
-| SOFNOQK12AB01840FC | Kutt Free (DJ Volume Remix)    | ARNNKDK1187B98BBD5 | -    | 407.37914 |
-
-
-- artists table: Save artist ID, name, location, latitude, and longitude from dataset
-
-| artist_id          | name      | location        | lattitude | longitude |
-|--------------------|-----------|-----------------|-----------|-----------|
-| ARNNKDK1187B98BBD5 | Jinx      | Zagreb Croatia  | 45.80726  | 15.9676   |
-
 
 ### log_data ETL
 
@@ -108,24 +93,24 @@ And below is an example of what the data in a log file, 2018-11-12-events.json, 
 ```
 
 #### Final tabes
+Fact Table
 
-- time table: Select ts from dataset and save extracted the timestamp, hour, day, week of year, month, year, and weekday from the ts field.
+songplays - records in log data associated with song plays i.e. records with page NextSong
+songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
 
-| start_time                 | hour | day | week | month | year | weekday |
-|----------------------------|------|-----|------|-------|------|---------|
-| 2018-11-29 00:00:57.796000 | 0    | 29  | 48   | 11    | 2018 | 3       |
+Dimension Tables
 
-
-- users table: Save user ID, first name, last name, gender and level. If duplicated user information is delivered, Update level field.
-
-| user_id | first_name | last_name | gender | level |
-|---------|------------|-----------|--------|-------|
-| 79      | James      | Martin    | M      | free  |
-
-- songplays table: Save the timestamp, user ID, level, song ID, artist ID, session ID, location, and user agent from dataset. The song ID and artist ID will be retrieved by querying the songs and artists tables to find matches based on song title, artist name, and song duration time.
-
-| songplay_id | start_time                 | user_id | level | song_id | artist_id | session_id | location                            | user_agent                                                                                                              |
-|-------------|----------------------------|---------|-------|---------|-----------|------------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| 1           | 2018-11-29 00:00:57.796000 | 73      | paid  | -       | -         | 954        | Tampa-St. Petersburg-Clearwater, FL | "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.78.2 (KHTML, like Gecko) Version/7.0.6 Safari/537.78.2" |
+users - users in the app
+user_id, first_name, last_name, gender, level
+songs - songs in music database
+song_id, title, artist_id, year, duration
+artists - artists in music database
+artist_id, name, location, latitude, longitude
+time - timestamps of records in songplays broken down into specific units
+start_time, hour, day, week, month, year, weekday
 
 
+REFERENCES
+* https://classroom.udacity.com/nanodegrees/nd027/parts/f7dbb125-87a2-4369-bb64-dc5c21bb668a/modules/c0e48224-f2d0-4bf5-ac02-3e1493e530fc/lessons/01995bb4-db30-4e01-bf38-ff11b631be0f/concepts/1533c19b-0505-49fd-b1b7-06c987641f0d
+
+*  https://classroom.udacity.com/nanodegrees/nd027/parts/f7dbb125-87a2-4369-bb64-dc5c21bb668a/modules/c0e48224-f2d0-4bf5-ac02-3e1493e530fc/lessons/01995bb4-db30-4e01-bf38-ff11b631be0f/concepts/30ba33c4-1687-4c72-8ef3-a7a42862235b
