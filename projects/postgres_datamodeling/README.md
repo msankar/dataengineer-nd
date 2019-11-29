@@ -6,7 +6,7 @@ A startup called Sparkify wants to analyze the data they've been collecting on s
 As their data engineer I have to create a Postgres database with tables designed to optimize queries on song play analysis. My role is to create a database schema and ETL pipeline for this analysis. I'll be able to test my database and ETL pipeline by running queries given to me by the analytics team from Sparkify and compare my results with their expected results.
 
 ## Project Description
-In this project, I'll apply what you've learned on data modeling with Postgres and build an ETL pipeline using Python. To complete the project, I will need to define fact and dimension tables for a star schema for a particular analytic focus, and write an ETL pipeline that transfers data from files in data song and log directories into these tables in Postgres using Python and SQL.
+In this project, I'll apply what I've learned on data modeling with Postgres and build an ETL pipeline using Python. To complete the project, I will need to define fact and dimension tables for a star schema for a particular analytic focus, and write an ETL pipeline that transfers data from files in data song and log directories into these tables in Postgres using Python and SQL.
 
 ## Getting started
 To start ETL process, run the following from your terminal.
