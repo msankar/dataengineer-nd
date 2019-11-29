@@ -1,0 +1,140 @@
+Notes-Intro to DWH
+OLTP - Online txnl processing
+OLAP - Online analytical processing
+
+ETL = Extract, Transform, Load
+
+Goals
+Simple, Performant, QA, Simple, secure, handles new qs well.
+
+Dimensional modeling
+* star schema - good for OLAP
+Fact tables - business events
+Dimension tables - buiness events
+
+Fact - usually Numeric and additive
+Dim - Data & Time, loc, human roles, goods sold
+
+3NF schema vs Star schema
+Naive ETL : From 3NF to ETL
+	* Query the db (EXTRACT)
+	* Join tables, change types, add new colums (TRANSFORM)
+	* Load into facts & dims (LOAD)
+=====================================
+DWH Architecture
+* KimbAll 
+Back room - ETL transform, conform dimensions
+Front room, presentation - user conformed dim, dimensional , atomic data
+Applications = adhoc queries, analytical tools
+Kimball Bus matrix
+
+* Independent data marts
+- Dept specific data marts
+- inconsistent views, no conformed dimensions, dept autonomy
+
+* Inmon's corporate information factory (CIF)
+-Enterprise data warehouse (3NF)
+-data delivery
+- data marts
+- app can get data either from EDW or data marts.
+
+* Hybrid Kimball bus and Inmon CIF
+===================================
+OLAP cubes
+
+** Combination of dimensions and aggregate fact metric.
+** OLAP cube operations - roll-up and drill-down, store finest grain.
+** Olap cube op - SLICE - Reduce N dims to N-1 dims by restricting one dim to a single value.
+** DICE - Same dim but compute a sub cube by restricting some of the values of the dims.
+	
+** GROUP BY CUBE(movie, city, date)
+
+SLICING = Slicing is the reduction of the dimensionality of a cube by 1 e.g. 3 dimensions to 2, fixing one of the dimensions to a single value
+
+DICING = Dicing is creating a subcube with the same dimensionality but fewer values for two or more dimensions.
+
+GROUP BY GROUPING SETS
+
+SELECT dimDate.month,dimStore.country,sum(sales_amount) as revenue
+FROM factSales
+JOIN dimDate  on (dimDate.date_key  = factSales.date_key)
+JOIN dimStore on (dimStore.store_key = factSales.store_key)
+GROUP by grouping sets ((), dimDate.month,  dimStore.country, (dimDate.month,  dimStore.country));
+
+GROUP BY CUBE
+-- Be careful to not have none in country
+SELECT d.month,s.country,sum(sales_amount) as revenue
+FROM factSales f
+JOIN dimDate  d on (d.date_key  = f.date_key)
+JOIN dimStore s on (s.store_key = f.store_key)
+GROUP by cube(d.month,  s.country);
++====================================
+
+DATE WAREHOUSE TECH
+
+OLAP cubes technology
+* Pre-aggregate OLAP cubes and save them in non-relational db (MOLAP)
+* Compute OLAP cubes on the fly where dim model resides (ROLAP)
+
+==========================================
+
+COLUMNAR vs ROW STORAGE
+
+
+
+==========================================
+BOOKS
+The Data Warehouse Toolkit: The Complete Guide to Dimensional Modeling (Kimball)
+Building the Data Warehouse (Inmon)
+Building a Data Warehouse: With Examples in SQL Server (Rainardi)
+=====================================
+
+Create pagila db
+!PGPASSWORD=student createdb -h 127.0.0.1 -U student pagila
+!PGPASSWORD=student psql -q -h 127.0.0.1 -U student -d pagila -f Data/pagila-schema.sql
+!PGPASSWORD=student psql -q -h 127.0.0.1 -U student -d pagila -f Data/pagila-data.sql
+=*=*=*=*=*=*
+%load_ext sql
+=*=*=*=*=*=*
+DB_ENDPOINT = "127.0.0.1"
+DB = 'pagila'
+DB_USER = 'student'
+DB_PASSWORD = 'student'
+DB_PORT = '5432'
+
+# postgresql://username:password@host:port/database
+conn_string = "postgresql://{}:{}@{}:{}/{}" \
+                        .format(DB_USER, DB_PASSWORD, DB_ENDPOINT, DB_PORT, DB)
+
+print(conn_string)
+=*=*=*=*=*=*
+%sql $conn_string
+=*=*=*=*=*=*
+nStores = %sql select count(*) from store;
+nFilms = %sql select count(*) from film;
+nCustomers = %sql select count(*) from customer;
+nRentals = %sql select count(*) from rental;
+nPayment = %sql select count(*) from payment;
+nStaff = %sql select count(*) from staff;
+nCity = %sql select count(*) from city;
+nCountry = %sql select count(*) from country;
+
+print("nFilms\t\t=", nFilms[0][0])
+print("nCustomers\t=", nCustomers[0][0])
+print("nRentals\t=", nRentals[0][0])
+print("nPayment\t=", nPayment[0][0])
+print("nStaff\t\t=", nStaff[0][0])
+print("nStores\t\t=", nStores[0][0])
+print("nCities\t\t=", nCity[0][0])
+print("nCountry\t\t=", nCountry[0][0])
+=*=*=*=*=*=*
+%%sql 
+select min(payment_date) as start, max(payment_date) as end from payment;
+=*=*=*=*=*=*
+
+%%sql
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name   = 'factsales'
+
+

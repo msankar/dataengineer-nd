@@ -1,0 +1,80 @@
+* Column oriented storage
+* Best suited for olap
+* Internally modified postgresql
+* MPP (Massiely parallel processing) 1 query in multiple cpu
+
+Architecture
+
+* Cluster - Leader node with many compute nodes.
+* Compute node has own cpu and mem.
+* Each compute node computes one slice of db
+* Computer optimized nodes or storage optimized in AWS (dc or ds)
+=================
+SQL to SQL ETL
+* Add an ETL server in the middle, that has the corresponding client, transform the data, then load it into other SQL server.
+* In AWS case there can be an EC2 instance which issues copy commands,copies to S3. then read from S3. S3 is the staging area
+
+===================
+Ingesting at Scale = Use COPY 
+* Break into smaller files. ingest in parallel, files use a common prefix or manifest file. Compress the files , use same AWS region, specify the delimiter 
+====================
+
+copy xx from s3 bucket credentials. gzip delimiter ';' REGION 'us-west'
+
+- compress the cols or copy command automatically compresses.
+- S3 used for staging, or connect using ssh.
+- connection out of redshift (odbc/jdbc) or unload
+======================
+Infrastructure as code (IaC)
+* aws-cli, aws sdk
+* shareable, reproducible, maintainable, multiple deployments
+
+=======================
+Optimizing table design
+DISTRIBUTION STYLE: 
+*EVEN
+- Round-robin over all slices to achieve load-balancing
+- High cost of join withj even distrib 
+*ALL
+- Dimension tables are small
+- Replicate on all slices, speeds up joins 
+- This is called broadcasting.
+* AUTO
+- Leave decision to REDSHIFT
+- Small tables are ALL
+- Large tables are EVEN
+*KEY
+- Rows with similar values are placed in same slice.
+- skewed distribution
+- helps when dim table is big. redshift collocates fact and dim in same slice.
+
+SORTING
+* Sorting key - rows are sorted before distribution
+- useful for cols that are ordered by.
+
+=======================
+python AWS SDK (boto3)
+IAM user dwhadmin
+
+[CLUSTER]
+HOST=dwhcluster.crewo3ntppii.us-west-2.redshift.amazonaws.com
+DB_NAME=dwh
+DB_USER=dwhuser
+DB_PASSWORD=Passw0rd
+DB_PORT=5439
+
+[IAM_ROLE]
+ARN='arn:aws:iam::056264805927:role/dwhRole'
+
+[S3]
+LOG_DATA='s3://udacity-dend/log_data'
+LOG_JSONPATH='s3://udacity-dend/log_json_path.json'
+SONG_DATA='s3://udacity-dend/song_data'
+
+
+
+
+
+
+
+
