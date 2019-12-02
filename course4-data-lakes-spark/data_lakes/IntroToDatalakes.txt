@@ -1,0 +1,19 @@
+Data Lakes 
+Why
+- data exploration
+- advanced analytics, ML, graphs etc.
+
+Effects of big data
+- low costs
+- ETL offloading
+- dimensional modeling
+- low cost of storage 
+- Schema on read 
+- Hive & spark - makes it easy to work with a file store.
+spark.read.csv("xx.csv", inferschema=true)
+- Reads data from diff formats (binary such as Avro, parquet (columnar)), gzip
+
+- R/W from diff sources, S3, HDFS etc
+-R/W from diff db
+-
+
