@@ -30,7 +30,7 @@ Port: Enter 5439.
 * From /opt/airflow, run ./start.sh to start Airflow web server
 
 ## Dag and Operators
-![IMG](sparkify_etl.png)
+![IMG](sparkify_dag.png)
 - sparkify_etl_dag.py: This dag loads data from S3 into staging tables, populates fact and dimension tables
 - data_quality.py: Operator to verify data quality
 - load_dimension.py: Operator to load dimension tables
