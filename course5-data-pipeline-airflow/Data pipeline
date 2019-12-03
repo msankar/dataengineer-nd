@@ -1,0 +1,172 @@
+Data pipeline
+
+* Series of steps in which data is processed. ETL or ELT
+* Data validation - correct, present, meaningful
+
+DAGs
+
+** Directed Acyclic Graphs (DAGs): DAGs are a special subset of graphs in which the edges between nodes have a specific direction, and no cycles exist. When we say “no cycles exist” what we mean is the nodes cant create a path back to themselves.
+** Nodes: A step in the data pipeline process.
+** Edges: The dependencies or relationships other between nodes.
+
+E -> T -> L
+
+Bikeshare DAT
+
+S3 to Redshift -> Redshift Analysis -> data delivered
+
+After you have updated the DAG, you will need to run /opt/airflow/start.sh command to start the Airflow webserver. Wait for it to be ready. Lauch UI.
+
+from airflow import dag
+Every dag must have a name, and startdate
+=================================================
+Build a data pipeline
+from airflow import DAG
+divvy_dag = DAG(
+    'divvy',
+    description='Analyzes Divvy Bikeshare Data',
+    start_date=datetime(2019, 2, 4),
+    schedule_interval='@daily')
+
+** create operators to perform tasks
+
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+
+def hello_world():
+    print(“Hello World”)
+
+divvy_dag = DAG(...)
+task = PythonOperator(
+    task_id=’hello_world’,
+    python_callable=hello_world,
+    dag=divvy_dag)
+
+ ** schedules
+ @once - Run a DAG once and then never again
+@hourly - Run the DAG every hour
+@daily - Run the DAG every day
+@weekly - Run the DAG every week
+@monthly - Run the DAG every month
+@yearly- Run the DAG every year
+None - Only run the DAG when the user initiates it
+
+=================================================
+OPERATOR and TASKS
+Operators
+Operators define the atomic steps of work that make up a DAG. Airflow comes with many Operators that can perform common operations. Here are a handful of common ones:
+
+PythonOperator
+PostgresOperator
+RedshiftToS3Operator
+S3ToRedshiftOperator
+BashOperator
+SimpleHttpOperator
+Sensor
+Task Dependencies
+In Airflow DAGs:
+
+Nodes = Tasks
+Edges = Ordering and dependencies between tasks
+Task dependencies can be described programmatically in Airflow using >> and <<
+
+a >> b means a comes before b
+a << b means a comes after b
+hello_world_task = PythonOperator(task_id=’hello_world’, ...)
+goodbye_world_task = PythonOperator(task_id=’goodbye_world’, ...)
+...
+# Use >> to denote that goodbye_world_task depends on hello_world_task
+hello_world_task >> goodbye_world_task
+Tasks dependencies can also be set with “set_downstream” and “set_upstream”
+
+a.set_downstream(b) means a comes before b
+a.set_upstream(b) means a comes after b
+hello_world_task = PythonOperator(task_id=’hello_world’, ...)
+goodbye_world_task = PythonOperator(task_id=’goodbye_world’, ...)
+...
+hello_world_task.set_downstream(goodbye_world_task)
+================================================
+
+CONNECTIONS VIA HOOK
+from airflow import DAG
+from airflow.hooks.postgres_hook import PostgresHook
+from airflow.operators.python_operator import PythonOperator
+
+def load():
+# Create a PostgresHook option using the `demo` connection
+    db_hook = PostgresHook(‘demo’)
+    df = db_hook.get_pandas_df('SELECT * FROM rides')
+    print(f'Successfully used PostgresHook to return {len(df)} records')
+
+load_task = PythonOperator(task_id=’load’, python_callable=hello_world, ...)
+
+HttpHook
+PostgresHook (works with RedShift)
+MySqlHook
+SlackHook
+PrestoHook
+=================================================
+CONTEXT and TEMPLATING
+
+https://airflow.apache.org/docs/stable/macros.html
+# Instructions
+# Use the Airflow context in the pythonoperator to complete the TODOs below. Once you are done, run your DAG and check the logs to see the context in use.
+
+import datetime
+import logging
+
+from airflow import DAG
+from airflow.models import Variable
+from airflow.operators.python_operator import PythonOperator
+from airflow.hooks.S3_hook import S3Hook
+
+def log_details(*args, **kwargs):
+    ds = kwargs['ds'] # kwargs[]
+    run_id = kwargs['run_id'] # kwargs[]
+    previous_ds = kwargs['prev_ds'] # kwargs.get('')
+    next_ds = kwargs['next_ds'] # kwargs.get('')
+
+    logging.info(f"Execution date is {ds}")
+    logging.info(f"My run id is {run_id}")
+    if previous_ds:
+        logging.info(f"My previous run was on {previous_ds}")
+    if next_ds:
+        logging.info(f"My next run will be {next_ds}")
+
+dag = DAG(
+    'lesson1.exercise5',
+    schedule_interval="@daily",
+    start_date=datetime.datetime.now() - datetime.timedelta(days=2)
+)
+
+list_task = PythonOperator(
+    task_id="log_details",
+    python_callable=log_details,
+    provide_context=True,
+    dag=dag
+)
+
+
+
+=================================================
+Components of DAG
+
+Scheduler
+DB
+Queue
+Webserver
+Worker
+
+Scheduler orchestrates the execution of jobs on a trigger or schedule. The Scheduler chooses how to prioritize the running and execution of tasks within the system. You can learn more about the Scheduler from the official Apache Airflow documentation.
+Work Queue is used by the scheduler in most Airflow installations to deliver tasks that need to be run to the Workers.
+Worker processes execute the operations defined in each DAG. In most Airflow installations, workers pull from the work queue when it is ready to process a task. When the worker completes the execution of the task, it will attempt to process more work from the work queue until there is no further work remaining. When work in the queue arrives, the worker will begin to process it.
+Database saves credentials, connections, history, and configuration. The database, often referred to as the metadata database, also stores the state of all tasks in the system. Airflow components interact with the database with the Python ORM, SQLAlchemy.
+Web Interface provides a control dashboard for users and maintainers. Throughout this course you will see how the web interface allows users to perform tasks such as stopping and starting DAGs, retrying failed tasks, configuring credentials, The web interface is built using the Flask web-development microframework.
+
+ORDER OF OPS
+The Airflow Scheduler starts DAGs based on time or external triggers.
+Once a DAG is started, the Scheduler looks at the steps within the DAG and determines which steps can run by looking at their dependencies.
+The Scheduler places runnable steps in the queue.
+Workers pick up those tasks and run them.
+Once the worker has finished running the step, the final status of the task is recorded and additional tasks are placed by the scheduler until all tasks are complete.
+Once all tasks have been completed, the DAG is complete.
